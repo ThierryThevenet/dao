@@ -47,9 +47,19 @@ contract Objection {
         names.push("objection_duration");
         names.push("objection_threshold");
         names.push("profile_price");
+        names.push("club-galaxie_private");
+        names.push("club-galaxie_anonymous");
+        names.push("club-galaxie_questionnaire");
+        names.push("club-galaxie_duration");
+        names.push("club-galaxie_files");
         values["objection_duration"] = Values({value: 2 days, used:true});
         values["objection_threshold"] = Values({value: 2, used:true}); // must at leat have 2 rejections
         values["profile_price"] = Values({value: 222, used:true});
+        values["club-galaxie_private"] = Values({value: 31, used:true});
+        values["club-galaxie_anonymous"] = Values({value: 32, used:true});
+        values["club-galaxie_questionnaire"] = Values({value: 33, used:true});
+        values["club-galaxie_duration"] = Values({value: 34, used:true});
+        values["club-galaxie_files"] = Values({value: 35, used:true});
     }
 
     // Public functions
@@ -61,7 +71,10 @@ contract Objection {
 
     // Getter : value of variable
     function get_value(bytes32 varname) public view returns (int) {
-        return values[varname].value;
+        if (!values[varname].used)
+          return -1;
+        else 
+          return values[varname].value;
     }
 
     // Getter : current objection variable name
@@ -91,7 +104,7 @@ contract Objection {
         proposed_value = value;
         ending_date = now + uint(values["objection_duration"].value);
         currentObjectionId++;
-        NewObjection(currentObjectionId, variable, value, justification);
+        emit NewObjection(currentObjectionId, variable, value, justification);
     }
 
     // Vote against the current objection
@@ -107,7 +120,7 @@ contract Objection {
       if (status == State.waiting && now >= ending_date) {
         // Reject the objection.
         if (hasRejected.length >= uint(values['objection_threshold'].value)) {
-          Fail(variable_name, proposed_value);
+          emit Fail(variable_name, proposed_value);
           cleanup();
           return true;
         }
@@ -116,7 +129,7 @@ contract Objection {
           if (!values[variable_name].used)
             names.push(variable_name);
           values[variable_name] = Values({value:proposed_value, used:true});
-          Succeed(variable_name, proposed_value);
+          emit Succeed(variable_name, proposed_value);
           cleanup();
           return true;
         }
