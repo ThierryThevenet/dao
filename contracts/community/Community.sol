@@ -1,8 +1,8 @@
 pragma solidity ^0.4.21;
 
 import '../ownership/Ownable.sol';
-import './token/TalaoToken.sol';
-import './freelancer/Freelancer.sol';
+import '../TalaoToken.sol';
+import '../freelancer/Freelancer.sol';
 
 /**
  * @title Community

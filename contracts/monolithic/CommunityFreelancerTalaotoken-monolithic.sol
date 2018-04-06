@@ -913,7 +913,7 @@ contract Freelancer is Ownable {
             return (false, 0, 0);
         }
         FreelancerCommunityReputation memory reputation = freelancerCommunityReputation[_freelancerAddress][_communityAddress];
-        uint contributionScore = reputation.contributionScore;
+        freelancerContributionRating = reputation.contributionScore;
         for (uint i = 0; i < reputation.clientsRatings.length; i++) {
             uint freelancerClientRating = (reputation.clientsRatingsWeights[i]).mul(reputation.clientsRatings[i]);
             freelancerClientsRatings = freelancerClientsRatings.add(freelancerClientRating);

@@ -91,7 +91,7 @@ contract Objection {
         proposed_value = value;
         ending_date = now + uint(values["objection_duration"].value);
         currentObjectionId++;
-        NewObjection(currentObjectionId, variable, value, justification);
+        emit NewObjection(currentObjectionId, variable, value, justification);
     }
 
     // Vote against the current objection
@@ -107,7 +107,7 @@ contract Objection {
       if (status == State.waiting && now >= ending_date) {
         // Reject the objection.
         if (hasRejected.length >= uint(values['objection_threshold'].value)) {
-          Fail(variable_name, proposed_value);
+          emit Fail(variable_name, proposed_value);
           cleanup();
           return true;
         }
@@ -116,7 +116,7 @@ contract Objection {
           if (!values[variable_name].used)
             names.push(variable_name);
           values[variable_name] = Values({value:proposed_value, used:true});
-          Succeed(variable_name, proposed_value);
+          emit Succeed(variable_name, proposed_value);
           cleanup();
           return true;
         }

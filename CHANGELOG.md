@@ -1,5 +1,10 @@
 # Talao DAO prototype: changelog
 
+## 0.9.0
+
++ Beginning of implementation of Truffle tests
++ Each test displays the cost in € of its send transactions
+
 ## 0.8.0
 
 + Rewrite & cleanup of Freelancer.sol (still WIP)
