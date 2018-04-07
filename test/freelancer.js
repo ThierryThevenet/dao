@@ -37,6 +37,8 @@ contract('Freelancer', function(accounts) {
     return Freelancer.deployed().then(function(instance) {
       contract = instance;
       return contract.joinDaoFromMarketplace(accounts[2], userHash, {from: accounts[2]});
+    }).then(function(result) {
+      cost = ((web3.fromWei((result.receipt.gasUsed) * (web3.eth.gasPrice), 'ether')) * ethPrice).toFixed(2);
     }).then(function() {
       return contract.isFreelancerActive.call(accounts[2]);
     }).then(function(isFreelancerActive) {

@@ -1,5 +1,7 @@
 # Talao DAO prototype
 
+*Important: the latest code for the Talao Token, and the crowdsale, are in the [Blockchain Partner's repo](https://github.com/Blockchainpartner/talao-crowdsale), not here.*
+
 Based on https://github.com/facebook/create-react-app
 
 ## tl;dr
