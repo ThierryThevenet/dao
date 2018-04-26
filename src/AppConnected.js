@@ -8,6 +8,7 @@ import Communities from './community/Communities';
 import Community from './community/Community';
 import Objection from './objection/Objection';
 import Account from './account/Account';
+import FreelancerProfile from './freelancer/FreelancerProfile';
 import faUsers from '@fortawesome/fontawesome-free-solid/faUsers';
 import faCog from '@fortawesome/fontawesome-free-solid/faCog';
 import faUser from '@fortawesome/fontawesome-free-solid/faUser';
@@ -61,6 +62,7 @@ class AppConnected extends Component {
               <Route path = "/community/:communityAddress" component = { Community } />
               <Route path = "/objections" component = { Objection } />
               <Route path = "/account" component = { Account } />
+              <Route path = "/freelancer/:freelancerAddress" component = { FreelancerProfile } />
             </div>
           </Router>
         </div>
