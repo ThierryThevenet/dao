@@ -205,7 +205,7 @@ class Vault extends React.Component {
                 console.log(err);
             else {
                 if (event['blockNumber'] > this.state.firstBlock) {
-                    if (event['args']['happened'] == 2) {
+                    if (event['args']['happened'] === 2) {
                         var index = this.state.documents.findIndex((d, i, o) => d && d.address === this.getIpfsHashFromBytes32(event['args']['documentId']));
                         this.state.documents.splice(index, 1);
                         this.forceUpdate();

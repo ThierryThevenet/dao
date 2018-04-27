@@ -152,7 +152,7 @@ contract Vault is Ownable {
     {
         require(documentId != 0 && keyword.length != 0);
         require(!talentsDocuments[documentId].isAlive);
-        SafeMath.add(NbOfValidDocument,1);
+        NbOfValidDocument = NbOfValidDocument.add(1);
 
         talentsDocuments[documentId].description = description;
         talentsDocuments[documentId].isAlive = true;
