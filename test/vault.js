@@ -5,6 +5,7 @@ var TalaoToken = artifacts.require('TalaoToken');
 
 contract('Vault', function(accounts) {
     var token, factory, vault;
+    var talent = accounts[1];
 
     before(async function() {
         // deploy token & mint all accounts
@@ -22,16 +23,27 @@ contract('Vault', function(accounts) {
 
     it('should create a vault on demand', async function() {
         // firstly create vault access with price of 3e18 tokens
-        await token.createVaultAccess(3e18, {from: accounts[1]});
+        await token.createVaultAccess(3e18, {from: talent});
 
         // create vault for the same account as above
-        let addr = await factory.CreateVaultContract({from: accounts[1]});
+        let addr = await factory.CreateVaultContract({from: talent});
         vault = Vault.at(addr.logs[0].address);
-        assert.equal(await vault.owner.call(), accounts[1], "owner of vault isnt creator");
+        assert.equal(await vault.owner.call(), talent, "owner of vault isnt creator");
     });
 
     it('should create a document on demand', async function() {
-        await vault.addDocument("docid", "description", "keyword", {from: accounts[1]});
-        assert(await vault.getDocumentIsAlive.call("docid", {from: accounts[1]}), "document should be alive");
+        await vault.addDocument("docid", "description", "keyword", {from: talent});
+        assert(await vault.getDocumentIsAlive.call("docid", {from: talent}), "document should be alive");
+    });
+
+    it('should add a keyword successfully', async function() {
+        await vault.addKeyword("docid", "otherkeyword", {from: talent});
+        let keyw = await vault.getKeywordsByIndex("docid", 1, {from: talent});
+        assert(web3.toAscii(keyw).startsWith("otherkeyword"), "added wrong keyword?");
+    });
+
+    it('should return the correct amount of keywords', async function() {
+        let num = await vault.getKeywordsNumber("docid", {from: talent});
+        assert.equal(num.toNumber(), 2, "returned wrong number of keywords");
     });
 });
