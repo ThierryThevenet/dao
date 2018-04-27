@@ -524,10 +524,7 @@ class Vault extends React.Component {
         return (
             <div>
                 <div className="pb20" style={this.state.view === 'vault' ? {} : { display: 'none' }}>
-                    <h1>My account</h1>
-                    <p className="etherum-address">Account @: {this.context.web3.selectedAccount}</p>
-                    {this.renderQrCode(this.context.web3.selectedAccount, 100)}
-                    {this.renderVault(this.state.vaultAddress)}
+                    <h2>My Vault</h2>
                 </div>
                 {this.renderAddDocument(this.state.view)}
                 {this.renderDocuments(this.state.documents, this.state.vaultAddress, this.state.view)}
