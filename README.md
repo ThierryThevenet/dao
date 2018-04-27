@@ -51,6 +51,25 @@ To deploy the TALAO token contract you must add the other Solidity contracts it 
 
 ... Or just use TalaoTokenMonolithic.sol
 
+## IPFS for Vault
+
+Download from https://ipfs.io/ipns/dist.ipfs.io/#go-ipfs
+
+    tar xvzf IPFS_ARCHIVE_FILENAME.tar.gz
+    sudo mv go-ipfs/ipfs /usr/local/bin
+    sudo chown root:root /usr/local/bin/ipfs
+    ipfs init
+
+In another shell launch an IPFS daemon:
+
+    ipfs daemon
+
+In another shell configure it:
+
+    ipfs config --json API.HTTPHeaders.Access-Control-Allow-Credentials '["true"]'
+    ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["PUT","GET","POST"]'
+    ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["*"]'
+
 ## Smart contracts tests
 
 You must have Truffle installed globaly:
