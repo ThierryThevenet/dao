@@ -20,8 +20,8 @@ class Vault extends React.Component {
 
         // const contract
         const vaultFactoryCont = new window.web3.eth.Contract(
-            JSON.parse(process.env.REACT_APP_VAULTFACTORY_ABI),
-            process.env.REACT_APP_VAULTFACTORY_ADDRESS
+            JSON.parse(process.env.REACT_APP_VAULT_FACTORY_ABI),
+            process.env.REACT_APP_VAULT_FACTORY_ADDRESS
         );
 
         this.state = {
@@ -62,8 +62,8 @@ class Vault extends React.Component {
         });
 
         //create an event for Contract creation
-        var vaultOldFactoryContract = window.web3old.eth.contract(JSON.parse(process.env.REACT_APP_VAULTFACTORY_ABI));
-        var val = vaultOldFactoryContract.at(process.env.REACT_APP_VAULTFACTORY_ADDRESS);
+        var vaultOldFactoryContract = window.web3old.eth.contract(JSON.parse(process.env.REACT_APP_VAULT_FACTORY_ABI));
+        var val = vaultOldFactoryContract.at(process.env.REACT_APP_VAULT_FACTORY_ADDRESS);
 
         this.eventVaultCreated = val.VaultCreation();
         this.eventVaultCreated.watch((err, event) => {
@@ -87,7 +87,7 @@ class Vault extends React.Component {
 
         this.state.vaultFactoryContract.methods.FreelanceVault(this.context.web3.selectedAccount).call().then(vaultAdress => {
             if (vaultAdress !== '0x0000000000000000000000000000000000000000') {
-                
+
                 this.setState({
                     vaultAddress: vaultAdress,
                     documents: [],
@@ -100,7 +100,7 @@ class Vault extends React.Component {
                 });
 
                 this.createVaultCont(vaultAdress);
-                
+
                 //init document list
                 this.state.vaultContract.getPastEvents('VaultDocAdded', {}, { fromBlock: 0, toBlock: 'latest' }).then(events => {
                     events.forEach((event => {
@@ -140,7 +140,7 @@ class Vault extends React.Component {
         if (this.state.currentAccount !== null && this.state.currentAccount !== this.context.web3.selectedAccount)
         {
             this.getVaultAndDocuments();
-        }    
+        }
     }
 
     componentWillUnmount() {
