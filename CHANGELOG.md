@@ -1,5 +1,13 @@
 # Talao DAO prototype: changelog
 
+## 0.11.0
+
++ Vault
+
+## 0.10.0
+
++ Beginning of Freelancer public profile
+
 ## 0.9.0
 
 + Beginning of implementation of Truffle tests
