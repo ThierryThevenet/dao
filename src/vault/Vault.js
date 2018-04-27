@@ -18,10 +18,9 @@ class Vault extends React.Component {
     constructor(props) {
         super(props);
 
-        // const contract
         const vaultFactoryCont = new window.web3.eth.Contract(
-            JSON.parse(process.env.REACT_APP_VAULT_FACTORY_ABI),
-            process.env.REACT_APP_VAULT_FACTORY_ADDRESS
+            JSON.parse(process.env.REACT_APP_VAULTFACTORY_ABI),
+            process.env.REACT_APP_VAULTFACTORY_ADDRESS
         );
 
         this.state = {
@@ -39,8 +38,8 @@ class Vault extends React.Component {
             currentAccount: null
         }
 
+        // TODO: process.env.REACT_APP_...
         this.ipfsApi = IpfsApi('localhost', 5001, { protocol: 'http' });
-
         this.createFreelanceVault = this.createFreelanceVault.bind(this);
         this.addDocument = this.addDocument.bind(this);
         this.goToAddDocument = this.goToAddDocument.bind(this);
@@ -54,7 +53,6 @@ class Vault extends React.Component {
 
     componentDidMount() {
 
-        //get initbock to manage event
         window.web3.eth.getBlockNumber().then(blockNumber => {
             this.setState({
                 firstBlock: blockNumber
@@ -62,8 +60,8 @@ class Vault extends React.Component {
         });
 
         //create an event for Contract creation
-        var vaultOldFactoryContract = window.web3old.eth.contract(JSON.parse(process.env.REACT_APP_VAULT_FACTORY_ABI));
-        var val = vaultOldFactoryContract.at(process.env.REACT_APP_VAULT_FACTORY_ADDRESS);
+        var vaultOldFactoryContract = window.web3old.eth.contract(JSON.parse(process.env.REACT_APP_VAULTFACTORY_ABI));
+        var val = vaultOldFactoryContract.at(process.env.REACT_APP_VAULTFACTORY_ADDRESS);
 
         this.eventVaultCreated = val.VaultCreation();
         this.eventVaultCreated.watch((err, event) => {
@@ -219,9 +217,7 @@ class Vault extends React.Component {
         this.setState({ waiting: true });
         this.state.vaultFactoryContract.methods.CreateVaultContract().send(
             {
-                from: this.context.web3.selectedAccount,
-                gas: 4700000,
-                gasPrice: 100000000000
+                from: this.context.web3.selectedAccount
             })
             .on('error', error => {
                 alert("An error has occured when creating your vault (ERR: " + error + ")");
@@ -252,9 +248,7 @@ class Vault extends React.Component {
             if (this.state.vaultContract != null) {
                 this.state.vaultContract.methods.addDocument(docId, description, keywords).send(
                     {
-                        from: this.context.web3.selectedAccount,
-                        gas: 4700000,
-                        gasPrice: 100000000000
+                        from: this.context.web3.selectedAccount
                     }).on('error', error => {
                         alert("An error has occured when adding your document (ERR: " + error + ")");
                         this.goToVault();
@@ -294,9 +288,7 @@ class Vault extends React.Component {
         var docId = this.getBytes32FromIpfsHash(address);
         this.state.vaultContract.methods.removeDocument(docId).send(
             {
-                from: this.context.web3.selectedAccount,
-                gas: 4700000,
-                gasPrice: 100000000000
+                from: this.context.web3.selectedAccount
             }).on('error', error => {
                 alert("An error has occured when removing your document (ERR: " + error + ")");
                 return;
@@ -306,9 +298,7 @@ class Vault extends React.Component {
     addKeywords(docId, keyword) {
         this.state.vaultContract.methods.addKeyword(docId, keyword).send(
             {
-                from: this.context.web3.selectedAccount,
-                gas: 4700000,
-                gasPrice: 100000000000
+                from: this.context.web3.selectedAccount
             })
             .on('error', (error) => {
                 alert("An error has occured when adding keywords (ERR: " + error + ")");
@@ -485,17 +475,7 @@ class Vault extends React.Component {
     }
 
     renderVault(address) {
-        if (address) {
-            return (
-                <div>
-                    <h3>My vault</h3>
-                    <div className="mb20">
-                        <div className="etherum-address">Vault @:{this.state.vaultAddress}</div>
-                    </div>
-                </div>
-            );
-        }
-        else {
+        if (!address) {
             return (
                 <div className="box blue">
                     <p className="big" style={this.state.waiting ? { display: 'none' } : {}}>
@@ -524,7 +504,8 @@ class Vault extends React.Component {
         return (
             <div>
                 <div className="pb20" style={this.state.view === 'vault' ? {} : { display: 'none' }}>
-                    <h2>My Vault</h2>
+                    <h2>My vault</h2>
+                    {this.renderVault(this.state.vaultAddress)}
                 </div>
                 {this.renderAddDocument(this.state.view)}
                 {this.renderDocuments(this.state.documents, this.state.vaultAddress, this.state.view)}

@@ -66,9 +66,9 @@ In another shell launch an IPFS daemon:
 
 In another shell configure it:
 
-    ipfs config --json API.HTTPHeaders.Access-Control-Allow-Credentials '["true"]'
-    ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["PUT","GET","POST"]'
-    ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["*"]'
+`ipfs config --json API.HTTPHeaders.Access-Control-Allow-Credentials '["true"]'
+ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["PUT","GET","POST"]'
+ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["*"]'`
 
 ## Smart contracts tests
 
