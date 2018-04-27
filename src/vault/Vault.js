@@ -38,8 +38,11 @@ class Vault extends React.Component {
             currentAccount: null
         }
 
-        // TODO: process.env.REACT_APP_...
-        this.ipfsApi = IpfsApi('localhost', 5001, { protocol: 'http' });
+        this.ipfsApi = IpfsApi(
+          process.env.REACT_APP_IPFS_API,
+          5001,
+          { protocol: 'http' }
+        );
         this.createFreelanceVault = this.createFreelanceVault.bind(this);
         this.addDocument = this.addDocument.bind(this);
         this.goToAddDocument = this.goToAddDocument.bind(this);
