@@ -39,7 +39,7 @@ class Vault extends React.Component {
         }
 
         this.ipfsApi = IpfsApi(
-          process.env.REACT_APP_IPFS_API,
+          'localhost',
           5001,
           { protocol: 'http' }
         );
