@@ -23,10 +23,16 @@ class Vault extends React.Component {
             process.env.REACT_APP_VAULTFACTORY_ADDRESS
         );
 
+        const tokenContract = new window.web3.eth.Contract(
+            JSON.parse(process.env.REACT_APP_TOKEN_ABI),
+            process.env.REACT_APP_TOKEN_ADDRESS
+        );
+
         this.state = {
             vaultFactoryContract: vaultFactoryCont,
             vaultContract: null,
             vaultAddress: '',
+            canCreateVaultAccess: false,
             canCreateVault: false,
             documents: [],
             view: 'vault',
@@ -35,7 +41,8 @@ class Vault extends React.Component {
             keywords: '',
             uploadedDocument: null,
             firstBlock: null,
-            currentAccount: null
+            currentAccount: null,
+            tokenContract: tokenContract
         }
 
         this.ipfsApi = IpfsApi(
@@ -43,6 +50,7 @@ class Vault extends React.Component {
           5001,
           { protocol: 'http' }
         );
+        this.createVaultAccess = this.createVaultAccess.bind(this);
         this.createFreelanceVault = this.createFreelanceVault.bind(this);
         this.addDocument = this.addDocument.bind(this);
         this.goToAddDocument = this.goToAddDocument.bind(this);
@@ -125,14 +133,30 @@ class Vault extends React.Component {
                     vaultAddress: null,
                     documents: [],
                     view: 'vault',
-                    canCreateVault: true,
+                    canCreateVaultAccess: true,
                     waiting: false,
                     description: '',
                     keywords: '',
                     uploadedDocument: null,
                     vaultContract: null,
                     currentAccount: this.context.web3.selectedAccount
-                })
+                });
+                // Look in the token if the Freelancer already executed CreateVaultAccess():
+                this.state.tokenContract.methods.AccessAllowance(
+                  this.context.web3.selectedAccount,
+                  this.context.web3.selectedAccount
+                ).call()
+                .then(clientAccess => {
+                  if (clientAccess.clientAgreement) {
+                    this.setState({
+                      canCreateVaultAccess: false,
+                      canCreateVault: true
+                    })
+                  }
+                  else {
+                    // TODO
+                  }
+                });
             }
         })
     }
@@ -214,6 +238,9 @@ class Vault extends React.Component {
                 }
             }
         });
+    }
+
+    createVaultAccess() {
     }
 
     createFreelanceVault() {
@@ -481,7 +508,12 @@ class Vault extends React.Component {
         if (!address) {
             return (
                 <div className="box blue">
-                    <p className="big" style={this.state.waiting ? { display: 'none' } : {}}>
+                  <p style={ this.state.canCreateVaultAccess ? {} : { display: 'none' }}>
+                      TODO create vault access form
+                  </p>
+                    <p
+                      className="big"
+                      style={ this.state.canCreateVault ? {} : { display: 'none' }}>
                         To start, you must create a vault<br />
                         <Button value="Create Your Vault" icon={faFolder} onClick={this.createFreelanceVault} />
                     </p>
