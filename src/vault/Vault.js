@@ -89,6 +89,19 @@ class Vault extends React.Component {
           });
         }
       });
+      // Look in the token if the Freelancer already executed CreateVaultAccess():
+      this.state.tokenContract.methods.AccessAllowance(
+        this.context.web3.selectedAccount,
+        this.context.web3.selectedAccount
+      ).call()
+      .then(clientAccess => {
+        if (clientAccess.clientAgreement) {
+          this.setState({
+            canCreateVaultAccess: false,
+            canCreateVault: true
+          })
+        }
+      });
 
         window.web3.eth.getBlockNumber().then(blockNumber => {
             this.setState({
@@ -140,17 +153,17 @@ class Vault extends React.Component {
                 this.state.vaultContract.getPastEvents('VaultDocAdded', {}, { fromBlock: 0, toBlock: 'latest' }).then(events => {
                     events.forEach((event => {
                         var docId = event['returnValues']['documentId'].toString();
-                        //var docId = this.getIpfsHashFromBytes32(event['returnValues']['documentId']);
                         var description = window.web3.utils.hexToAscii(event['returnValues']['description']).replace(/\u0000/g, '');
 
-                        // this.state.vaultContract.methods.getDocumentIsAlive(docId).call().then(res => {
-                        //     if (res === true) {
-                        //         //we add only th document alive and not removed
-                        //         // this.state.vaultContract.methods.getKeywordsNumber(docId).call().then(number => {
-                        //         //     this.pushDocument(number, docId, description);
-                        //         // });
-                        //     }
-                        // });
+                        this.state.vaultContract.methods.getDocumentIsAlive(docId).call({from: this.context.web3.selectedAccount})
+                        .then(documentIsAlive => {
+                          if (documentIsAlive) {
+                            this.state.vaultContract.methods.getKeywordsNumber(docId).call({from: this.context.web3.selectedAccount})
+                            .then(number => {
+                                this.pushDocument(number, docId, description);
+                            });
+                          }
+                        });
                     }));
                 });
 
@@ -201,7 +214,8 @@ class Vault extends React.Component {
         var keywords = '';
         var promises = [];
         for (let index = 0; index < number; index++) {
-            promises.push(this.state.vaultContract.methods.getKeywordsByIndex(docId, index).call().then(result => {
+            promises.push(this.state.vaultContract.methods.getKeywordsByIndex(docId, index).call({from: this.context.web3.selectedAccount})
+            .then(result => {
                 keywords = (keywords === '' ? '' : keywords + '') + window.web3.utils.hexToAscii(result).replace(/\u0000/g, '');
             }));
         }
