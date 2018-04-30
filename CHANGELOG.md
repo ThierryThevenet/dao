@@ -1,8 +1,13 @@
 # Talao DAO prototype: changelog
 
+## 0.12.0
+
++ Vault with Talao Token
++ Link to Vault files on https://ipfs.io/ipfs/_FILE_HASH (TODO: fix encoding for other than .txt)
+
 ## 0.11.0
 
-+ Vault
++ Vault with fake token simply implementing AccessAllowance
 
 ## 0.10.0
 

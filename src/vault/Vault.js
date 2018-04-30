@@ -252,7 +252,8 @@ class Vault extends React.Component {
                 if (event['blockNumber'] > this.state.firstBlock) {
                     var docId = event['args']['documentId'];
                     var description = window.web3.utils.hexToAscii(event['args']['description']).replace(/\u0000/g, '')
-                    this.state.vaultContract.methods.getKeywordsNumber(docId).call().then(number => {
+                    this.state.vaultContract.methods.getKeywordsNumber(docId).call({from: this.context.web3.selectedAccount})
+                    .then(number => {
                         this.pushDocument(number, docId, description);
                         this.goToVault();
                     });
@@ -526,7 +527,11 @@ class Vault extends React.Component {
                 (document, index) =>
                     (
                         <tr key={index}>
-                            <td>{document.description}<br /><span className="etherum-address-white">Doc @: {document.address}</span></td>
+                            <td>
+                              <a href = { 'https://ipfs.io/ipfs/' + document.address } target="_blank" rel="noopener noreferrer">
+                                { document.description }
+                              </a>
+                            </td>
                             <td>{document.keywords}</td>
                             <td>{this.renderQrCode(document.address, 20)}</td>
                             <td>
