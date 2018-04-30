@@ -46,7 +46,8 @@ class Vault extends React.Component {
             currentAccount: null,
             tokenContract: tokenContract,
             tokenSymbol: null,
-            vaultPrice: '',
+            vaultDeposit: null,
+            vaultPrice: ''
         }
 
         this.ipfsApi = IpfsApi(
@@ -75,6 +76,16 @@ class Vault extends React.Component {
         else {
           this.setState({
             tokenSymbol: symbol
+          });
+        }
+      });
+      // Get vault deposit.
+      this.state.tokenContract.methods.vaultDeposit().call( (err, vaultDepositWei) => {
+        if (err) console.error (err);
+        else {
+          let vaultDeposit = window.web3.utils.fromWei(vaultDepositWei);
+          this.setState({
+            vaultDeposit: vaultDeposit
           });
         }
       });
@@ -109,11 +120,11 @@ class Vault extends React.Component {
 
     getVaultAndDocuments() {
 
-        this.state.vaultFactoryContract.methods.FreelanceVault(this.context.web3.selectedAccount).call().then(vaultAdress => {
-            if (vaultAdress !== '0x0000000000000000000000000000000000000000') {
+        this.state.vaultFactoryContract.methods.FreelanceVault(this.context.web3.selectedAccount).call().then(vaultAddress => {
+            if (vaultAddress !== '0x0000000000000000000000000000000000000000') {
 
                 this.setState({
-                    vaultAddress: vaultAdress,
+                    vaultAddress: vaultAddress,
                     documents: [],
                     view: 'vault',
                     canCreateVault: false,
@@ -123,7 +134,7 @@ class Vault extends React.Component {
                     currentAccount: this.context.web3.selectedAccount
                 });
 
-                this.createVaultCont(vaultAdress);
+                this.createVaultCont(vaultAddress);
 
                 //init document list
                 this.state.vaultContract.getPastEvents('VaultDocAdded', {}, { fromBlock: 0, toBlock: 'latest' }).then(events => {
@@ -132,14 +143,14 @@ class Vault extends React.Component {
                         //var docId = this.getIpfsHashFromBytes32(event['returnValues']['documentId']);
                         var description = window.web3.utils.hexToAscii(event['returnValues']['description']).replace(/\u0000/g, '');
 
-                        this.state.vaultContract.methods.getDocumentIsAlive(docId).call().then(res => {
-                            if (res === true) {
-                                //we add only th document alive and not removed
-                                this.state.vaultContract.methods.getKeywordsNumber(docId).call().then(number => {
-                                    this.pushDocument(number, docId, description);
-                                });
-                            }
-                        });
+                        // this.state.vaultContract.methods.getDocumentIsAlive(docId).call().then(res => {
+                        //     if (res === true) {
+                        //         //we add only th document alive and not removed
+                        //         // this.state.vaultContract.methods.getKeywordsNumber(docId).call().then(number => {
+                        //         //     this.pushDocument(number, docId, description);
+                        //         // });
+                        //     }
+                        // });
                     }));
                 });
 
@@ -167,9 +178,6 @@ class Vault extends React.Component {
                       canCreateVaultAccess: false,
                       canCreateVault: true
                     })
-                  }
-                  else {
-                    // TODO
                   }
                 });
             }
@@ -209,10 +217,10 @@ class Vault extends React.Component {
         });
     }
 
-    createVaultCont(vaultAdress) {
+    createVaultCont(vaultAddress) {
         const vaultContract = new window.web3.eth.Contract(
             JSON.parse(process.env.REACT_APP_VAULT_ABI),
-            vaultAdress
+            vaultAddress
         );
 
         this.setState({
@@ -220,7 +228,7 @@ class Vault extends React.Component {
         });
 
         this.contractObjectOldWeb3 = window.web3old.eth.contract(JSON.parse(process.env.REACT_APP_VAULT_ABI));
-        var vaultWithOldWeb3 = this.contractObjectOldWeb3.at(vaultAdress);
+        var vaultWithOldWeb3 = this.contractObjectOldWeb3.at(vaultAddress);
 
         this.eventDocAdded = vaultWithOldWeb3.VaultDocAdded();
         this.eventDocAdded.watch((err, event) => {
@@ -487,7 +495,7 @@ class Vault extends React.Component {
             return (
                 <div className="pb20">
                     <div className="box blue">
-                        <p className="big">
+                        <p>
                             To continue, we need to verify your identify: <br />
                             please upload your ID card, passport or driver license<br />
                             <Button value="Add your ID document" icon={faPlus} onClick={this.goToAddDocument} />
@@ -575,14 +583,16 @@ class Vault extends React.Component {
                     <CreateVaultAccessForm
                       onChange = { this.handleCreateVaultAccessInputChange }
                       onSubmit = { this.handleCreateVaultAccessSubmit }
+                      vaultDeposit = { this.state.vaultDeposit }
                       vaultPrice = { this.state.vaultPrice }
                       tokenSymbol = { this.state.tokenSymbol } />
                   </div>
                     <p
-                      className="big"
                       style={ this.state.canCreateVault ? {} : { display: 'none' }}>
-                        To start, you must create a vault<br />
-                        <Button value="Create Your Vault" icon={faFolder} onClick={this.createFreelanceVault} />
+                        <Button
+                          value = "Create Your Vault"
+                          icon = { faFolder }
+                          onClick = { this.createFreelanceVault }/>
                     </p>
                     <p style={this.state.waiting ? {} : { display: 'none' }}>
                         Waiting for vault to be created...
