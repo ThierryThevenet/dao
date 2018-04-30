@@ -1,5 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { NotificationManager } from 'react-notifications';
+import CreateVaultAccessForm from './CreateVaultAccessForm';
 import Button from '../ui/button/Button';
 import FontAwesomeIcon from '@fortawesome/react-fontawesome';
 import faPlus from '@fortawesome/fontawesome-free-solid/faPlus';
@@ -42,7 +44,9 @@ class Vault extends React.Component {
             uploadedDocument: null,
             firstBlock: null,
             currentAccount: null,
-            tokenContract: tokenContract
+            tokenContract: tokenContract,
+            tokenSymbol: null,
+            vaultPrice: '',
         }
 
         this.ipfsApi = IpfsApi(
@@ -50,7 +54,8 @@ class Vault extends React.Component {
           5001,
           { protocol: 'http' }
         );
-        this.createVaultAccess = this.createVaultAccess.bind(this);
+        this.handleCreateVaultAccessInputChange = this.handleCreateVaultAccessInputChange.bind(this);
+        this.handleCreateVaultAccessSubmit = this.handleCreateVaultAccessSubmit.bind(this);
         this.createFreelanceVault = this.createFreelanceVault.bind(this);
         this.addDocument = this.addDocument.bind(this);
         this.goToAddDocument = this.goToAddDocument.bind(this);
@@ -63,6 +68,16 @@ class Vault extends React.Component {
     }
 
     componentDidMount() {
+
+      // Get token symbol.
+      this.state.tokenContract.methods.symbol().call( (err, symbol) => {
+        if (err) console.error (err);
+        else {
+          this.setState({
+            tokenSymbol: symbol
+          });
+        }
+      });
 
         window.web3.eth.getBlockNumber().then(blockNumber => {
             this.setState({
@@ -240,9 +255,6 @@ class Vault extends React.Component {
         });
     }
 
-    createVaultAccess() {
-    }
-
     createFreelanceVault() {
         this.setState({ waiting: true });
         this.state.vaultFactoryContract.methods.CreateVaultContract().send(
@@ -396,6 +408,57 @@ class Vault extends React.Component {
         this.uploadElement.click();
     }
 
+    handleCreateVaultAccessInputChange(event) {
+      const target = event.target;
+      const value = target.value;
+      const name = target.name;
+      this.setState({
+        [name]: value
+      });
+    }
+    handleCreateVaultAccessSubmit(event) {
+      event.preventDefault();
+      let tokens_wei = window.web3.utils.toWei(this.state.vaultPrice);
+      this.state.tokenContract.methods
+        .createVaultAccess(tokens_wei)
+        .send({from: this.context.web3.selectedAccount})
+        .on('transactionHash', (hash) => {
+          this.setState({
+            canCreateVaultAccess: false
+          });
+          let message = 'Creating Vault access with a client price of ' + this.state.vaultPrice + ' ' + this.state.tokenSymbol + ' tokens (transaction hash: ' + hash + ')';
+          NotificationManager.create({
+            id: 400,
+            type: 'info',
+            message: message,
+            title: 'Transaction submitted',
+            timeOut: 0,
+          });
+        })
+        .on('receipt', (receipt) => {
+          let message = 'Creating Vault access with a client price of ' + this.state.vaultPrice + ' ' + this.state.tokenSymbol + ' tokens';
+          NotificationManager.remove({id: 400});
+          NotificationManager.create({
+            id: 401,
+            type: 'info',
+            message: message,
+            title: 'Transaction received',
+            timeOut: 0,
+          });
+        })
+        .on('confirmation', (confirmationNumber, receipt) => {
+          if (confirmationNumber === 1) {
+            let message = 'You created a Vault access with a client price of ' + this.state.vaultPrice + ' ' + this.state.tokenSymbol + ' tokens';
+            NotificationManager.remove({id: 401});
+            NotificationManager.success(message, 'Transaction completed');
+            this.setState({
+              canCreateVault: true
+            })
+          }
+        })
+        .on('error', console.error);
+    }
+
     renderDocuments(documents, vaultAddress, view) {
         if (view !== "vault" || vaultAddress == null || vaultAddress === "") return;
         if (documents != null && documents.length > 0)
@@ -508,9 +571,13 @@ class Vault extends React.Component {
         if (!address) {
             return (
                 <div className="box blue">
-                  <p style={ this.state.canCreateVaultAccess ? {} : { display: 'none' }}>
-                      TODO create vault access form
-                  </p>
+                  <div style={ this.state.canCreateVaultAccess ? {} : { display: 'none' }}>
+                    <CreateVaultAccessForm
+                      onChange = { this.handleCreateVaultAccessInputChange }
+                      onSubmit = { this.handleCreateVaultAccessSubmit }
+                      vaultPrice = { this.state.vaultPrice }
+                      tokenSymbol = { this.state.tokenSymbol } />
+                  </div>
                     <p
                       className="big"
                       style={ this.state.canCreateVault ? {} : { display: 'none' }}>
