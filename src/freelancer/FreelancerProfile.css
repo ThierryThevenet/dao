@@ -2,6 +2,7 @@
   padding-bottom: 20px;
 }
 
-.FreelancerProfile-ethereum-address {
+.FreelancerProfile-ethereum-address,
+.FreelancerProfile-communities {
   margin-bottom: 20px;
 }
