@@ -204,12 +204,6 @@ class Vault extends React.Component {
         }
     }
 
-    componentWillUnmount() {
-        this.eventVaultCreated.stopWatching(() => { });
-        this.eventDocAdded.stopWatching(() => { });
-        this.eventVaultLog.stopWatching(() => { });
-    }
-
     pushDocument(number, docId, description) {
         var keywords = '';
         var promises = [];

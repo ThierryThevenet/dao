@@ -1,5 +1,10 @@
 # Talao DAO prototype: changelog
 
+## 0.13.0
+
++ List of Freelancers in a Community page
++ List of Communities a Freelancer belongs to (on his public profile)
+
 ## 0.12.0
 
 + Vault with Talao Token

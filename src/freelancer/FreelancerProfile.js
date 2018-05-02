@@ -4,9 +4,10 @@ import { NotificationManager } from 'react-notifications';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import Button from '../ui/button/Button';
 import faCopy from '@fortawesome/fontawesome-free-solid/faCopy';
+import List from '../ui/list/List';
 import './FreelancerProfile.css';
 
-class FreelancerProfile extends Component {
+export default class FreelancerProfile extends Component {
   constructor (props) {
     super (props);
 
@@ -15,10 +16,17 @@ class FreelancerProfile extends Component {
       process.env.REACT_APP_FREELANCER_ADDRESS
     );
 
+    const communityFactoryContract = new window.web3.eth.Contract (
+      JSON.parse(process.env.REACT_APP_COMMUNITY_FACTORY_ABI),
+      process.env.REACT_APP_COMMUNITY_FACTORY_ADDRESS
+    );
+
     this.state = {
       freelancerContract: freelancerContract,
       isFreelancerActive: null,
-      isFreelancerBlocked: null
+      isFreelancerBlocked: null,
+      communityFactoryContract: communityFactoryContract,
+      freelancerCommunities: []
     }
   }
   componentDidMount() {
@@ -29,16 +37,57 @@ class FreelancerProfile extends Component {
       this.setState({
         isFreelancerActive: isFreelancerActive
       });
+      // Get all the communities.
+      let freelancerCommunities = [];
+      this.state.communityFactoryContract.getPastEvents('CommunityListing', {}, {fromBlock: 0, toBlock: 'latest'})
+      .then( events => {
+        events.forEach( (event) => {
+          // Does the freelancer belong to this community?
+          let communityAddress = event['returnValues']['community'];
+          let communityContract = new window.web3.eth.Contract (
+            JSON.parse(process.env.REACT_APP_COMMUNITY_ABI),
+            communityAddress
+          );
+          communityContract.getPastEvents(
+            'CommunitySubscription',
+            {
+              filter: {
+                _freelancerAddress: this.props.match.params.freelancerAddress
+              },
+              fromBlock: 0,
+              toBlock: 'latest'
+            }
+          ).then( events => {
+            events.forEach ( (event) => {
+              // Active community?
+              communityContract.methods.communityIsActive().call().then(communityIsActive => {
+                if (communityIsActive) {
+                  // Community name.
+                  communityContract.methods.communityName().call().then(communityName => {
+                    freelancerCommunities.push({
+                      link: communityAddress,
+                      anchor: communityName
+                    });
+                    this.setState({
+                      freelancerCommunities: freelancerCommunities
+                    });
+                  });
+                }
+              });
+            });
+          });
+        });
+      });
     });
   }
   render() {
     return (
       <div className = "FreelancerProfile">
-        <h1>Profile for this Freelancer</h1>
+        <h1>Freelancer { this.props.match.params.freelancerAddress }</h1>
         <div
-          className = "FreelancerProfile-active blue-dark box"
+          className = "FreelancerProfile-active"
           style = { this.state.isFreelancerActive ? {} : { display: 'none' }}>
-          <div className="FreelancerProfile-ethereum-address">
+          <div className = "FreelancerProfile-ethereum-address blue-dark box">
             <h2>Ethereum address</h2>
             <p>
               { this.props.match.params.freelancerAddress }
@@ -50,6 +99,15 @@ class FreelancerProfile extends Component {
                   icon = { faCopy } />
               </CopyToClipboard>
             </p>
+          </div>
+          <div className = "FreelancerProfile-communities yellow box">
+            <h2>Communities</h2>
+            <List
+              list = { this.state.freelancerCommunities }
+              resultsText = 'This freelancer belongs to these communities:'
+              noResultsText = 'This freelancer does not belong to any community yet.'
+              route = 'community'
+            />
           </div>
         </div>
         <div
@@ -65,5 +123,3 @@ class FreelancerProfile extends Component {
 FreelancerProfile.contextTypes = {
   web3: PropTypes.object
 }
-
-export default FreelancerProfile;
