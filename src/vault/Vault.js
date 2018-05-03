@@ -34,8 +34,8 @@ class Vault extends React.Component {
             vaultFactoryContract: vaultFactoryCont,
             vaultContract: null,
             vaultAddress: '',
-            canCreateVaultAccess: false,
-            canCreateVault: false,
+            canCreateVaultAccess: null,
+            canCreateVault: null,
             documents: [],
             view: 'vault',
             waiting: false,
@@ -90,7 +90,7 @@ class Vault extends React.Component {
         }
       });
       // Look in the token if the Freelancer already executed CreateVaultAccess():
-      this.state.tokenContract.methods.AccessAllowance(
+      this.state.tokenContract.methods.accessAllowance(
         this.context.web3.selectedAccount,
         this.context.web3.selectedAccount
       ).call()
@@ -99,6 +99,12 @@ class Vault extends React.Component {
           this.setState({
             canCreateVaultAccess: false,
             canCreateVault: true
+          })
+        }
+        else {
+          this.setState({
+            canCreateVaultAccess: true,
+            canCreateVault: false
           })
         }
       });
@@ -165,33 +171,6 @@ class Vault extends React.Component {
                           }
                         });
                     }));
-                });
-
-            } else {
-                this.setState({
-                    vaultAddress: null,
-                    documents: [],
-                    view: 'vault',
-                    canCreateVaultAccess: true,
-                    waiting: false,
-                    description: '',
-                    keywords: '',
-                    uploadedDocument: null,
-                    vaultContract: null,
-                    currentAccount: this.context.web3.selectedAccount
-                });
-                // Look in the token if the Freelancer already executed CreateVaultAccess():
-                this.state.tokenContract.methods.AccessAllowance(
-                  this.context.web3.selectedAccount,
-                  this.context.web3.selectedAccount
-                ).call()
-                .then(clientAccess => {
-                  if (clientAccess.clientAgreement) {
-                    this.setState({
-                      canCreateVaultAccess: false,
-                      canCreateVault: true
-                    })
-                  }
                 });
             }
         })
