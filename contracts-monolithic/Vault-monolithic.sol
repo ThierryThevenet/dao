@@ -66,7 +66,7 @@ contract BasicToken is ERC20Basic {
     // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -120,7 +120,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
@@ -136,7 +136,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -162,7 +162,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -183,7 +183,7 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -226,7 +226,7 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
@@ -261,8 +261,8 @@ contract MintableToken is StandardToken, Ownable {
   function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
     return true;
   }
 
@@ -272,7 +272,7 @@ contract MintableToken is StandardToken, Ownable {
    */
   function finishMinting() onlyOwner canMint public returns (bool) {
     mintingFinished = true;
-    MintFinished();
+    emit MintFinished();
     return true;
   }
 }
@@ -457,11 +457,11 @@ contract TalaoToken is MintableToken {
   {
       require(accessAllowance[msg.sender][msg.sender].clientAgreement==false);
       if (price>vaultDeposit) {
-          Vault(msg.sender, msg.sender, VaultStatus.PriceTooHigh);
+          emit Vault(msg.sender, msg.sender, VaultStatus.PriceTooHigh);
           return;
       }
       if (balanceOf(msg.sender)<vaultDeposit) {
-          Vault(msg.sender, msg.sender, VaultStatus.NotEnoughTokensDeposited);
+          emit Vault(msg.sender, msg.sender, VaultStatus.NotEnoughTokensDeposited);
           return;
       }
       data[msg.sender].accessPrice=price;
@@ -470,7 +470,7 @@ contract TalaoToken is MintableToken {
       data[msg.sender].userDeposit=vaultDeposit;
       data[msg.sender].sharingPlan=100;
       accessAllowance[msg.sender][msg.sender].clientAgreement=true;
-      Vault(msg.sender, msg.sender, VaultStatus.Created);
+      emit Vault(msg.sender, msg.sender, VaultStatus.Created);
   }
 
   /**
@@ -486,7 +486,7 @@ contract TalaoToken is MintableToken {
       accessAllowance[msg.sender][msg.sender].clientAgreement=false;
       totalDeposit=totalDeposit.sub(data[msg.sender].userDeposit);
       data[msg.sender].sharingPlan=0;
-      Vault(msg.sender, msg.sender, VaultStatus.Closed);
+      emit Vault(msg.sender, msg.sender, VaultStatus.Closed);
   }
 
   /**
@@ -509,7 +509,7 @@ contract TalaoToken is MintableToken {
 
       balances[_from] = balances[_from].sub(_value);
       balances[_to] = balances[_to].add(_value);
-      Transfer(_from, _to, _value);
+      emit Transfer(_from, _to, _value);
       return true;
   }
 
@@ -526,10 +526,10 @@ contract TalaoToken is MintableToken {
   {
       require(newplan<=100);
       require(accessAllowance[msg.sender][msg.sender].clientAgreement==true);
-      Vault(data[msg.sender].appointedAgent, msg.sender, VaultStatus.AgentRemoved);
+      emit Vault(data[msg.sender].appointedAgent, msg.sender, VaultStatus.AgentRemoved);
       data[msg.sender].appointedAgent=newagent;
       data[msg.sender].sharingPlan=newplan;
-      Vault(newagent, msg.sender, VaultStatus.NewAgent);
+      emit Vault(newagent, msg.sender, VaultStatus.NewAgent);
   }
 
   /**
@@ -558,7 +558,7 @@ contract TalaoToken is MintableToken {
       require(accessAllowance[freelance][freelance].clientAgreement==true);
       require(accessAllowance[msg.sender][freelance].clientAgreement!=true);
       if (balanceOf(msg.sender)<data[freelance].accessPrice){
-          Vault(msg.sender, freelance, VaultStatus.WrongAccessPrice);
+          emit Vault(msg.sender, freelance, VaultStatus.WrongAccessPrice);
           return false;
       }
       uint256 freelance_share = data[freelance].accessPrice.mul(data[freelance].sharingPlan).div(100);
@@ -567,7 +567,7 @@ contract TalaoToken is MintableToken {
       if(agent_share>0) super.transfer(data[freelance].appointedAgent, agent_share);
       accessAllowance[msg.sender][freelance].clientAgreement=true;
       accessAllowance[msg.sender][freelance].clientDate=block.number;
-      Vault(msg.sender, freelance, VaultStatus.NewAccess);
+      emit Vault(msg.sender, freelance, VaultStatus.NewAccess);
       return true;
   }
 
@@ -642,7 +642,7 @@ contract Vault is Ownable {
     modifier allowance () { //require sur l'aggreement
         bool agreement = false;
         uint unused = 0;
-        (agreement, unused) = myToken.AccessAllowance(msg.sender,msg.sender);
+        (agreement, unused) = myToken.accessAllowance(msg.sender,msg.sender);
         require(agreement == true);
         _;
     }
@@ -865,7 +865,7 @@ contract VaultFactory is Ownable {
         //Verify using Talao token if sender is authorized to create a Vault
         bool agreement = false;
         uint unused = 0;
-        (agreement, unused) = myToken.AccessAllowance(msg.sender,msg.sender);
+        (agreement, unused) = myToken.accessAllowance(msg.sender,msg.sender);
 
         require (agreement == true);
         require(FreelanceVault[msg.sender] == address(0));

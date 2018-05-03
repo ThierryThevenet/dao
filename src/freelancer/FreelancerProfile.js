@@ -108,7 +108,7 @@ export default class FreelancerProfile extends Component {
             freelancerHasVault: true
           });
           // Does the client has access to the Vault?
-          this.state.tokenContract.methods.AccessAllowance(
+          this.state.tokenContract.methods.accessAllowance(
             this.context.web3.selectedAccount,
             this.props.match.params.freelancerAddress
           )
@@ -121,7 +121,7 @@ export default class FreelancerProfile extends Component {
             // No => is the Vault access open?
             else {
               // Get Vault access price.
-              this.state.tokenContract.methods.Data(this.props.match.params.freelancerAddress)
+              this.state.tokenContract.methods.data(this.props.match.params.freelancerAddress)
               .call()
               .then( freelanceData => {
                 let freelancerVaultPriceWei = freelanceData.accessPrice;
