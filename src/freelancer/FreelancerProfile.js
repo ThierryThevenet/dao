@@ -6,6 +6,7 @@ import Button from '../ui/button/Button';
 import faCopy from '@fortawesome/fontawesome-free-solid/faCopy';
 import List from '../ui/list/List';
 import VaultGetAccess from '../vault/VaultGetAccess';
+import VaultView from '../vault/VaultView';
 import './FreelancerProfile.css';
 
 export default class FreelancerProfile extends Component {
@@ -41,7 +42,7 @@ export default class FreelancerProfile extends Component {
       vaultFactoryContract: vaultFactoryContract,
       freelancerHasVault: null,
       freelancerGetVaultAccess: null,
-      freelancerDisplayVault: null,
+      freelancerVaultView: null,
       freelancerVaultPrice: null,
       tokenContract: tokenContract,
       tokenSymbol: null
@@ -116,7 +117,9 @@ export default class FreelancerProfile extends Component {
           .then( clientAccess => {
             // Yes => display Vault.
             if (clientAccess.clientAgreement) {
-              console.log('display vault');
+              this.setState({
+                freelancerVaultView: true
+              });
             }
             // No => is the Vault access open?
             else {
@@ -179,42 +182,32 @@ export default class FreelancerProfile extends Component {
           NotificationManager.remove({id: 451});
           NotificationManager.success(message, 'Transaction completed');
           this.setState({
-            freelancerDisplayVault: true
+            freelancerVaultView: true
           })
         }
       })
       .on('error', console.error);
   }
+  vaultView() {
+
+  }
   render() {
     return (
       <div className = "FreelancerProfile">
         <h1>Freelancer { this.props.match.params.freelancerAddress }</h1>
+        <p>
+          <CopyToClipboard
+            text = { this.props.match.params.freelancerAddress }
+            onCopy = { () => NotificationManager.success('Copied to clipboard') }>
+            <Button
+              value = "copy address"
+              icon = { faCopy } />
+          </CopyToClipboard>
+        </p>
         <div
           className = "FreelancerProfile-active"
           style = { this.state.isFreelancerActive ? {} : { display: 'none' }}>
-          <div className = "FreelancerProfile-ethereum-address blue-dark box">
-            <h2>Ethereum address</h2>
-            <p>
-              { this.props.match.params.freelancerAddress }
-              <CopyToClipboard
-                text = { this.props.match.params.freelancerAddress }
-                onCopy = { () => NotificationManager.success('Copied to clipboard') }>
-                <Button
-                  value = "copy"
-                  icon = { faCopy } />
-              </CopyToClipboard>
-            </p>
-          </div>
-          <div className = "FreelancerProfile-communities green box">
-            <h2>Communities</h2>
-            <List
-              list = { this.state.freelancerCommunities }
-              resultsText = 'This freelancer belongs to these communities:'
-              noResultsText = 'This freelancer does not belong to any community yet.'
-              route = 'community'
-            />
-          </div>
-          <div className = "FreelancerProfile-vault yellow box">
+          <div className = "FreelancerProfile-vault green box">
             <h2>Vault</h2>
             <div
               className = "FreelancerProfile-vault-novault"
@@ -235,10 +228,19 @@ export default class FreelancerProfile extends Component {
               </div>
               <div
                 className = "FreelancerProfile-vault-vault-display"
-                style = { this.state.freelancerDisplayVault ? {} : { display: 'none' }}>
-                <p>TODO: display vault</p>
+                style = { this.state.freelancerVaultView ? {} : { display: 'none' }}>
+                <VaultView />
               </div>
             </div>
+          </div>
+          <div className = "FreelancerProfile-communities yellow box">
+            <h2>Communities</h2>
+            <List
+              list = { this.state.freelancerCommunities }
+              resultsText = 'This freelancer belongs to these communities:'
+              noResultsText = 'This freelancer does not belong to any community yet.'
+              route = 'community'
+            />
           </div>
         </div>
         <div
