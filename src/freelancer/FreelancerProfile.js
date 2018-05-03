@@ -44,6 +44,7 @@ export default class FreelancerProfile extends Component {
       freelancerGetVaultAccess: null,
       freelancerVaultView: null,
       freelancerVaultPrice: null,
+      freelancerVaultDocuments: [],
       tokenContract: tokenContract,
       tokenSymbol: null
     }
@@ -102,13 +103,13 @@ export default class FreelancerProfile extends Component {
       // Does the freelancer have a Vault?
       this.state.vaultFactoryContract.methods.FreelanceVault(this.props.match.params.freelancerAddress)
       .call()
-      .then(vaultAddress => {
+      .then(freelancerVaultAddress => {
         // Yes, the freelancer has a Vault.
-        if (vaultAddress !== '0x0000000000000000000000000000000000000000') {
+        if (freelancerVaultAddress !== process.env.REACT_APP_NO_ADDRESS) {
           this.setState({
             freelancerHasVault: true
           });
-          // Does the client has access to the Vault?
+          // Does the client have access to the Vault?
           this.state.tokenContract.methods.accessAllowance(
             this.context.web3.selectedAccount,
             this.props.match.params.freelancerAddress
@@ -120,8 +121,36 @@ export default class FreelancerProfile extends Component {
               this.setState({
                 freelancerVaultView: true
               });
+              // Load Vault contract.
+              const freelancerVaultContract = new window.web3.eth.Contract(
+                JSON.parse(process.env.REACT_APP_VAULT_ABI),
+                freelancerVaultAddress
+              );
+              // Get documents.
+              let freelancerVaultDocuments = [];
+              freelancerVaultContract.getPastEvents('VaultDocAdded', {}, { fromBlock: 0, toBlock: 'latest' })
+              .then(events => {
+                events.forEach(event => {
+                  // Document.
+                  let doc = {
+                    ipfsHash: event['returnValues']['documentId'].toString(),
+                    description: window.web3.utils.hexToAscii(event['returnValues']['description']).replace(/\u0000/g, '')
+                  }
+                  // Is the document still OK or was it "suppressed"?
+                  freelancerVaultContract.methods.getDocumentIsAlive(doc.ipfsHash)
+                  .call({from: this.context.web3.selectedAccount})
+                  .then(documentIsAlive => {
+                    if (documentIsAlive) {
+                      freelancerVaultDocuments.push(doc);
+                      this.setState({
+                        freelancerVaultDocuments: freelancerVaultDocuments
+                      });
+                    }
+                  });
+                });
+              });
             }
-            // No => is the Vault access open?
+            // No => propose to pay access to vault.
             else {
               // Get Vault access price.
               this.state.tokenContract.methods.data(this.props.match.params.freelancerAddress)
@@ -147,8 +176,6 @@ export default class FreelancerProfile extends Component {
     });
   }
   handleVaultGetAccessClick() {
-    console.log(this.props.match.params.freelancerAddress);
-    console.log(this.context.web3.selectedAccount);
     this.state.tokenContract.methods
       .getVaultAccess(this.props.match.params.freelancerAddress)
       .send({from: this.context.web3.selectedAccount})
@@ -188,9 +215,6 @@ export default class FreelancerProfile extends Component {
       })
       .on('error', console.error);
   }
-  vaultView() {
-
-  }
   render() {
     return (
       <div className = "FreelancerProfile">
@@ -207,8 +231,8 @@ export default class FreelancerProfile extends Component {
         <div
           className = "FreelancerProfile-active"
           style = { this.state.isFreelancerActive ? {} : { display: 'none' }}>
+          <h2>Vault</h2>
           <div className = "FreelancerProfile-vault green box">
-            <h2>Vault</h2>
             <div
               className = "FreelancerProfile-vault-novault"
               style = { this.state.freelancerHasVault ? { display: 'none' } : {}}>
@@ -229,12 +253,12 @@ export default class FreelancerProfile extends Component {
               <div
                 className = "FreelancerProfile-vault-vault-display"
                 style = { this.state.freelancerVaultView ? {} : { display: 'none' }}>
-                <VaultView />
+                <VaultView documents = { this.state.freelancerVaultDocuments } />
               </div>
             </div>
           </div>
+          <h2>Communities</h2>
           <div className = "FreelancerProfile-communities yellow box">
-            <h2>Communities</h2>
             <List
               list = { this.state.freelancerCommunities }
               resultsText = 'This freelancer belongs to these communities:'

@@ -1,5 +1,13 @@
 # Talao DAO prototype: changelog
 
+## 0.15.0
+
++ View someone's Vault
+
+## 0.14.0
+
++ Update to latest TalaoToken
+
 ## 0.13.0
 
 + List of Freelancers in a Community page
