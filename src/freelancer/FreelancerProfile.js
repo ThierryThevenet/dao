@@ -231,12 +231,12 @@ export default class FreelancerProfile extends Component {
         <div
           className = "FreelancerProfile-active"
           style = { this.state.isFreelancerActive ? {} : { display: 'none' }}>
-          <h2>Vault</h2>
+          <h2>This Freelancer Vault</h2>
           <div className = "FreelancerProfile-vault green box">
             <div
               className = "FreelancerProfile-vault-novault"
               style = { this.state.freelancerHasVault ? { display: 'none' } : {}}>
-              <p>This freelancer has no Vault yet.</p>
+              <p>This Freelancer has no Vault yet.</p>
             </div>
             <div
               className = "FreelancerProfile-vault-vault"
@@ -257,7 +257,7 @@ export default class FreelancerProfile extends Component {
               </div>
             </div>
           </div>
-          <h2>Communities</h2>
+          <h2>This Freelancer Communities</h2>
           <div className = "FreelancerProfile-communities yellow box">
             <List
               list = { this.state.freelancerCommunities }
