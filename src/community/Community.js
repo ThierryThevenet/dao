@@ -6,9 +6,10 @@ import faLock from '@fortawesome/fontawesome-free-solid/faLock';
 import faLockOpen from '@fortawesome/fontawesome-free-solid/faLockOpen';
 import Button from '../ui/button/Button';
 import faSignInAlt from '@fortawesome/fontawesome-free-solid/faSignInAlt';
+import List from "../ui/list/List";
 import './Community.css';
 
-class Community extends Component {
+export default class Community extends Component {
   constructor (props) {
     super (props);
 
@@ -35,10 +36,10 @@ class Community extends Component {
       communityMinimumReputationToVote: null,
       communityJobCommission: null,
       communityJoinFee: null,
-      communityMembers: null,
+      communityMembers: [],
       freelancerContract: freelancerContract,
       freelancerIsActive: null,
-      freelancerIsCommunityMember: null
+      freelancerIsCommunityMember: null,
     }
 
     this.handleJoinDaoClick = this.handleJoinDaoClick.bind(this);
@@ -115,6 +116,26 @@ class Community extends Component {
           if (freelancerIsCommunityMember) {
             // TODO
           }
+        });
+      });
+      // Freelancers that belong to this community.
+      this.state.communityContract.getPastEvents(
+        'CommunitySubscription',
+        {
+          fromBlock: 0,
+          toBlock: 'latest'
+        }
+      ).then( events => {
+        let communityMembers = [];
+        events.forEach ( (event) => {
+          let freelancerAddress = event['returnValues']['_freelancerAddress'];
+          communityMembers.push({
+            link: freelancerAddress,
+            anchor: freelancerAddress
+          });
+        });
+        this.setState({
+          communityMembers: communityMembers
         });
       });
     });
@@ -275,6 +296,17 @@ class Community extends Component {
                 onClick = { this.handleJoinDaoClick } />
             </div>
           </div>
+          <div className = "Community-Freelancer-members">
+            <h2>Freelancers in this community</h2>
+            <div className = "yellow box">
+              <List
+                list = { this.state.communityMembers }
+                resultsText = 'Those freelancers belong to this community:'
+                noResultsText = 'No freelancer belongs to this community yet.'
+                route = 'freelancer'
+              />
+            </div>
+          </div>
         </div>
         <div
           className = "Community-inactive"
@@ -289,5 +321,3 @@ class Community extends Component {
 Community.contextTypes = {
   web3: PropTypes.object
 }
-
-export default Community;
