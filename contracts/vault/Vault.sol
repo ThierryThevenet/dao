@@ -4,6 +4,10 @@ import "../ownership/Ownable.sol";
 import "../math/SafeMath.sol";
 import "../TalaoToken.sol";
 
+/**
+ * @title Vault
+ * @dev Vault
+ */
 contract Vault is Ownable {
     using SafeMath for uint;
 
@@ -27,7 +31,7 @@ contract Vault is Ownable {
     enum VaultLife { AccessDenied, DocumentAdded, DocumentRemoved, keywordAdded }
 
     event VaultLog (
-        address indexed user, 
+        address indexed user,
         VaultLife happened,
         bytes32 documentId
     );
@@ -41,7 +45,7 @@ contract Vault is Ownable {
     modifier allowance () { //require sur l'aggreement
         bool agreement = false;
         uint unused = 0;
-        (agreement, unused) = myToken.AccessAllowance(msg.sender,msg.sender);
+        (agreement, unused) = myToken.accessAllowance(msg.sender,msg.sender);
         require(agreement == true);
         _;
     }
@@ -50,8 +54,8 @@ contract Vault is Ownable {
     add new certification document to Talent Vault
     accessibility : only for authorized user and owner of this contract
     */
-    function Vault(address token) 
-        public 
+    function Vault(address token)
+        public
     {
         myToken = TalaoToken(token);
     }
@@ -60,15 +64,15 @@ contract Vault is Ownable {
     add new certification document to Talent Vault
     accessibility : only for authorized user and owner of this contract
     */
-    function addDocument(bytes32 documentId, bytes32 description, bytes32 keyword) 
-        onlyOwner 
-        allowance 
-        public 
+    function addDocument(bytes32 documentId, bytes32 description, bytes32 keyword)
+        onlyOwner
+        allowance
+        public
         returns (bool)
     {
         require(documentId != 0 && keyword.length != 0);
         require(!talentsDocuments[documentId].isAlive);
-        SafeMath.add(NbOfValidDocument,1);
+        NbOfValidDocument = NbOfValidDocument.add(1);
 
         talentsDocuments[documentId].description = description;
         talentsDocuments[documentId].isAlive = true;
@@ -101,9 +105,9 @@ contract Vault is Ownable {
     Remove existing document using document id
     accessibility : only for authorized user and owner of this contract
     */
-    function removeDocument (bytes32 documentId) 
-        onlyOwner 
-        allowance 
+    function removeDocument (bytes32 documentId)
+        onlyOwner
+        allowance
         public
     {
         require(documentId != 0);
@@ -119,11 +123,11 @@ contract Vault is Ownable {
     get indication to know quickly if document removed or not
     accessibility : only for authorized user
     */
-    function getDocumentIsAlive(bytes32 documentId) 
+    function getDocumentIsAlive(bytes32 documentId)
         allowance
         constant
         public
-        returns(bool) 
+        returns(bool)
     {
         require(documentId != 0);
         return(talentsDocuments[documentId].isAlive);
@@ -162,11 +166,11 @@ contract Vault is Ownable {
     using document Id provided by ethereum when a document is uploaded
     accessibility : only for authorized user
     */
-    function getCertifiedDocumentById (bytes32 documentId) 
-        allowance 
+    function getCertifiedDocumentById (bytes32 documentId)
+        allowance
         public
-        constant 
-        returns (bytes32 docId, bytes32 desc, uint keywordNumber) 
+        constant
+        returns (bytes32 docId, bytes32 desc, uint keywordNumber)
     {
         require(documentId != 0 && talentsDocuments[documentId].isAlive == true);
         return (documentId, talentsDocuments[documentId].description, talentsDocuments[documentId].keywords.length);
@@ -201,13 +205,13 @@ contract Vault is Ownable {
         for (uint i = 0; i < talentsDocuments[dId].keywords.length; i++) {
             valueFounded = talentsDocuments[dId].keywords[i];
             if(keccak256(valueFounded) == keccak256(keyword)){
-                return (dId, talentsDocuments[dId].description);  
+                return (dId, talentsDocuments[dId].description);
             }
         }
     }
 
-    function () 
-        public 
+    function ()
+        public
     {
         revert();
     }
