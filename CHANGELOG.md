@@ -1,5 +1,23 @@
 # Talao DAO prototype: changelog
 
+## 0.13.0
+
++ List of Freelancers in a Community page
++ List of Communities a Freelancer belongs to (on his public profile)
+
+## 0.12.0
+
++ Vault with Talao Token
++ Link to Vault files on https://ipfs.io/ipfs/_FILE_HASH (TODO: fix encoding for other than .txt)
+
+## 0.11.0
+
++ Vault with fake token simply implementing AccessAllowance
+
+## 0.10.0
+
++ Beginning of Freelancer public profile
+
 ## 0.9.0
 
 + Beginning of implementation of Truffle tests

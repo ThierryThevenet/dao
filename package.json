@@ -1,12 +1,13 @@
 {
-  "name": "react-proto",
-  "version": "0.1.0",
+  "name": "Talao-DAO",
+  "version": "0.11.0",
   "private": true,
   "dependencies": {
     "@fortawesome/fontawesome": "^1.1.4",
     "@fortawesome/fontawesome-free-brands": "^5.0.7",
     "@fortawesome/fontawesome-free-solid": "^5.0.7",
     "@fortawesome/react-fontawesome": "0.0.17",
+    "ipfs-api": "^20.0.1",
     "purecss": "^1.0.0",
     "qrcode.react": "^0.8.0",
     "react": "^16.2.0",

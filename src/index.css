@@ -92,3 +92,12 @@ a:hover {
     padding: 20px 20px;
   }
 }
+
+/* Lists */
+ol {
+  text-align: left;
+}
+
+ol li {
+  margin-bottom: 20px;
+}
