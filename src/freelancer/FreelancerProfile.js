@@ -110,14 +110,14 @@ export default class FreelancerProfile extends Component {
             freelancerHasVault: true
           });
           // Does the client have access to the Vault?
-          this.state.tokenContract.methods.accessAllowance(
-            this.context.web3.selectedAccount,
-            this.props.match.params.freelancerAddress
+          this.state.tokenContract.methods.hasVaultAccess(
+            this.props.match.params.freelancerAddress,
+            this.context.web3.selectedAccount
           )
           .call()
-          .then( clientAccess => {
+          .then( hasVaultAccess => {
             // Yes => display Vault.
-            if (clientAccess.clientAgreement) {
+            if (hasVaultAccess) {
               let freelancerVaultContract = new window.web3.eth.Contract(
                 JSON.parse(process.env.REACT_APP_VAULT_ABI),
                 freelancerVaultAddress
