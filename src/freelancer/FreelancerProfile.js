@@ -118,14 +118,13 @@ export default class FreelancerProfile extends Component {
           .then( clientAccess => {
             // Yes => display Vault.
             if (clientAccess.clientAgreement) {
-              this.setState({
-                freelancerVaultView: true
-              });
-              // Load Vault contract.
-              const freelancerVaultContract = new window.web3.eth.Contract(
+              let freelancerVaultContract = new window.web3.eth.Contract(
                 JSON.parse(process.env.REACT_APP_VAULT_ABI),
                 freelancerVaultAddress
               );
+              this.setState({
+                freelancerVaultView: true
+              });
               // Get documents.
               let freelancerVaultDocuments = [];
               freelancerVaultContract.getPastEvents('VaultDocAdded', {}, { fromBlock: 0, toBlock: 'latest' })
@@ -136,10 +135,12 @@ export default class FreelancerProfile extends Component {
                     ipfsHash: event['returnValues']['documentId'].toString(),
                     description: window.web3.utils.hexToAscii(event['returnValues']['description']).replace(/\u0000/g, '')
                   }
+                  console.log(doc);
                   // Is the document still OK or was it "suppressed"?
                   freelancerVaultContract.methods.getDocumentIsAlive(doc.ipfsHash)
                   .call({from: this.context.web3.selectedAccount})
                   .then(documentIsAlive => {
+                    console.log(documentIsAlive);
                     if (documentIsAlive) {
                       freelancerVaultDocuments.push(doc);
                       this.setState({
