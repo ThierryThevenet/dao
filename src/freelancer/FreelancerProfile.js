@@ -135,12 +135,10 @@ export default class FreelancerProfile extends Component {
                     ipfsHash: event['returnValues']['documentId'].toString(),
                     description: window.web3.utils.hexToAscii(event['returnValues']['description']).replace(/\u0000/g, '')
                   }
-                  console.log(doc);
                   // Is the document still OK or was it "suppressed"?
                   freelancerVaultContract.methods.getDocumentIsAlive(doc.ipfsHash)
                   .call({from: this.context.web3.selectedAccount})
                   .then(documentIsAlive => {
-                    console.log(documentIsAlive);
                     if (documentIsAlive) {
                       freelancerVaultDocuments.push(doc);
                       this.setState({
