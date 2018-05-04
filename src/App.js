@@ -28,7 +28,7 @@ class App extends Component {
             <li><a href="https://ico.talao.io" target="_blank" rel="noopener noreferrer">The Talao ICO</a></li>
             <li><a href="https://talao.io" target="_blank" rel="noopener noreferrer">Talao.io</a></li>
           </ul>
-          <p>v0.13</p>
+          <p>v0.14</p>
         </footer>
       </div>
     );

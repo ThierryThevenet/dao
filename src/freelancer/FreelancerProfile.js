@@ -6,6 +6,7 @@ import Button from '../ui/button/Button';
 import faCopy from '@fortawesome/fontawesome-free-solid/faCopy';
 import List from '../ui/list/List';
 import VaultGetAccess from '../vault/VaultGetAccess';
+import VaultView from '../vault/VaultView';
 import './FreelancerProfile.css';
 
 export default class FreelancerProfile extends Component {
@@ -41,8 +42,9 @@ export default class FreelancerProfile extends Component {
       vaultFactoryContract: vaultFactoryContract,
       freelancerHasVault: null,
       freelancerGetVaultAccess: null,
-      freelancerDisplayVault: null,
+      freelancerVaultView: null,
       freelancerVaultPrice: null,
+      freelancerVaultDocuments: [],
       tokenContract: tokenContract,
       tokenSymbol: null
     }
@@ -101,24 +103,53 @@ export default class FreelancerProfile extends Component {
       // Does the freelancer have a Vault?
       this.state.vaultFactoryContract.methods.FreelanceVault(this.props.match.params.freelancerAddress)
       .call()
-      .then(vaultAddress => {
+      .then(freelancerVaultAddress => {
         // Yes, the freelancer has a Vault.
-        if (vaultAddress !== '0x0000000000000000000000000000000000000000') {
+        if (freelancerVaultAddress !== process.env.REACT_APP_NO_ADDRESS) {
           this.setState({
             freelancerHasVault: true
           });
-          // Does the client has access to the Vault?
-          this.state.tokenContract.methods.accessAllowance(
-            this.context.web3.selectedAccount,
-            this.props.match.params.freelancerAddress
+          // Does the client have access to the Vault?
+          this.state.tokenContract.methods.hasVaultAccess(
+            this.props.match.params.freelancerAddress,
+            this.context.web3.selectedAccount
           )
           .call()
-          .then( clientAccess => {
+          .then( hasVaultAccess => {
             // Yes => display Vault.
-            if (clientAccess.clientAgreement) {
-              console.log('display vault');
+            if (hasVaultAccess) {
+              let freelancerVaultContract = new window.web3.eth.Contract(
+                JSON.parse(process.env.REACT_APP_VAULT_ABI),
+                freelancerVaultAddress
+              );
+              this.setState({
+                freelancerVaultView: true
+              });
+              // Get documents.
+              let freelancerVaultDocuments = [];
+              freelancerVaultContract.getPastEvents('VaultDocAdded', {}, { fromBlock: 0, toBlock: 'latest' })
+              .then(events => {
+                events.forEach(event => {
+                  // Document.
+                  let doc = {
+                    ipfsHash: event['returnValues']['documentId'].toString(),
+                    description: window.web3.utils.hexToAscii(event['returnValues']['description']).replace(/\u0000/g, '')
+                  }
+                  // Is the document still OK or was it "suppressed"?
+                  freelancerVaultContract.methods.getDocumentIsAlive(doc.ipfsHash)
+                  .call({from: this.context.web3.selectedAccount})
+                  .then(documentIsAlive => {
+                    if (documentIsAlive) {
+                      freelancerVaultDocuments.push(doc);
+                      this.setState({
+                        freelancerVaultDocuments: freelancerVaultDocuments
+                      });
+                    }
+                  });
+                });
+              });
             }
-            // No => is the Vault access open?
+            // No => propose to pay access to vault.
             else {
               // Get Vault access price.
               this.state.tokenContract.methods.data(this.props.match.params.freelancerAddress)
@@ -144,8 +175,6 @@ export default class FreelancerProfile extends Component {
     });
   }
   handleVaultGetAccessClick() {
-    console.log(this.props.match.params.freelancerAddress);
-    console.log(this.context.web3.selectedAccount);
     this.state.tokenContract.methods
       .getVaultAccess(this.props.match.params.freelancerAddress)
       .send({from: this.context.web3.selectedAccount})
@@ -179,7 +208,7 @@ export default class FreelancerProfile extends Component {
           NotificationManager.remove({id: 451});
           NotificationManager.success(message, 'Transaction completed');
           this.setState({
-            freelancerDisplayVault: true
+            freelancerVaultView: true
           })
         }
       })
@@ -189,37 +218,24 @@ export default class FreelancerProfile extends Component {
     return (
       <div className = "FreelancerProfile">
         <h1>Freelancer { this.props.match.params.freelancerAddress }</h1>
+        <p>
+          <CopyToClipboard
+            text = { this.props.match.params.freelancerAddress }
+            onCopy = { () => NotificationManager.success('Copied to clipboard') }>
+            <Button
+              value = "copy address"
+              icon = { faCopy } />
+          </CopyToClipboard>
+        </p>
         <div
           className = "FreelancerProfile-active"
           style = { this.state.isFreelancerActive ? {} : { display: 'none' }}>
-          <div className = "FreelancerProfile-ethereum-address blue-dark box">
-            <h2>Ethereum address</h2>
-            <p>
-              { this.props.match.params.freelancerAddress }
-              <CopyToClipboard
-                text = { this.props.match.params.freelancerAddress }
-                onCopy = { () => NotificationManager.success('Copied to clipboard') }>
-                <Button
-                  value = "copy"
-                  icon = { faCopy } />
-              </CopyToClipboard>
-            </p>
-          </div>
-          <div className = "FreelancerProfile-communities green box">
-            <h2>Communities</h2>
-            <List
-              list = { this.state.freelancerCommunities }
-              resultsText = 'This freelancer belongs to these communities:'
-              noResultsText = 'This freelancer does not belong to any community yet.'
-              route = 'community'
-            />
-          </div>
-          <div className = "FreelancerProfile-vault yellow box">
-            <h2>Vault</h2>
+          <h2>This Freelancer Vault</h2>
+          <div className = "FreelancerProfile-vault green box">
             <div
               className = "FreelancerProfile-vault-novault"
               style = { this.state.freelancerHasVault ? { display: 'none' } : {}}>
-              <p>This freelancer has no Vault yet.</p>
+              <p>This Freelancer has no Vault yet.</p>
             </div>
             <div
               className = "FreelancerProfile-vault-vault"
@@ -235,10 +251,19 @@ export default class FreelancerProfile extends Component {
               </div>
               <div
                 className = "FreelancerProfile-vault-vault-display"
-                style = { this.state.freelancerDisplayVault ? {} : { display: 'none' }}>
-                <p>TODO: display vault</p>
+                style = { this.state.freelancerVaultView ? {} : { display: 'none' }}>
+                <VaultView documents = { this.state.freelancerVaultDocuments } />
               </div>
             </div>
+          </div>
+          <h2>This Freelancer Communities</h2>
+          <div className = "FreelancerProfile-communities yellow box">
+            <List
+              list = { this.state.freelancerCommunities }
+              resultsText = 'This freelancer belongs to these communities:'
+              noResultsText = 'This freelancer does not belong to any community yet.'
+              route = 'community'
+            />
           </div>
         </div>
         <div
