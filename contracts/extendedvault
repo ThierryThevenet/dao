@@ -1,0 +1,193 @@
+// specifications pour code a integrer dans le smartcontract du Vault
+//
+// - data du freelancer pour le  Vault : on considere en definitove que 1 vault = 1 freelancer
+// - vault public data dont confidence index data structure
+// - fonctions de base pour manipuler ces updateRatings
+// - creation d une whiteliste d adresse qui peuvent acceder au Vault (porte dérobée) sans payer
+//
+// pour  affichage du confidence index (puis  plus tard de la DAO)  on stock une matrice 4 certifcats x 5 criteres  
+
+// problemes et solutions liées a la transmission des certificats par le freelance
+// le probleme : le freelance enregistre lui meme les certificats il peut dnc manipuler les donnéees
+// avant de les transferer au smart contract.la solution : on permet au ownr (Talao) de modifier certaine données les public data 
+// comme le confidence index et les derniers ratings .
+// on permet au owner(Talao) d'acceder aux derniers certficats qui sont utilisés pour les calculs
+// Talao maitrise donc la qualité des données publiques (confidence index)
+
+
+
+
+// consequence pour l'issuer du certificat Blockcerts, il faut integrer dans le certificat
+// - 5 criteres de ratings
+// - poids economique de la mission (en jour ?)
+// - date de la mission ou du certificat (elel doit dejà etre dedans j imagine)
+// - partner : c est notre "distributeur" ex Kmong...
+// - un champ unused pour le future
+
+
+
+pragma solidity ^0.4.18;
+import "browser/Owned.sol";
+
+// Du code a integrer dans le smart cntract du Vault fabriq probablement 
+contract ExtendedVault is Owned {
+    
+    // Nb of criterias rated by client
+    uint8 public constant maxCriteria = 5;
+    // Nb ratings taking into account for confidence index
+    uint8 public constant maxRating = 4;
+    // freelance can be Active, Inactive or Suspended by Talao in case of bad behavior
+    uint8 public constant Inactive = 0;
+    uint8 public constant Active =1;
+    uint8 public constant Suspended =2;
+    
+    struct InternalVaultData {
+        // internal freelance(=vault) data
+        // Inactive, Active or Suspended, init by default 0 -> do not replace by enum 
+        uint8 userState;
+        bool isUserKYC;
+        // this is the origin of the freelance for futre use
+        uint8 referral;
+        uint256 subscriptionDate; 
+        //  Last blockcerts certificates URL used by confidence index but not public
+        string[maxRating] lastCertificates;
+        // for futrure use
+        uint256 unUsed;
+    }
+     struct PublicVaultData {
+        // public freelancer data
+        bytes32 firstName;
+        bytes32 lastName;
+        bytes32 mobilePhone;
+        bytes32 email;
+        bytes32 otherSocialMedia;
+        
+        //Confidence Index starts here
+        // last ratings values (matrix)
+        uint8[maxRating][maxCriteria] ratingValue;
+        // Economical weight of the last ratings
+        uint8[maxRating] ratingWeight;
+        // Date of the last ratings
+        uint256[maxRating] ratingDate;
+        bool isIdentity;
+        bool isMobilephone;
+        bool isEmail;
+        uint8 nbEducations;
+        uint8 nbExperiences;
+        uint8 nbSkills;
+        uint8 nbLanguages;
+        // for future use
+        uint256 unUsed;
+     }
+    //whitelisted address of partners to get a free access to vault
+    mapping(address=>mapping(address=>bool)) public listedPartner;
+    // mapping between[{]_parter freelancer Ethereum address and his data
+    mapping (address => InternalVaultData) private InternalData ;   
+    // mapping between Vault Ethereum address and Confidence Index
+    mapping (address => PublicVaultData) public PublicData;
+    
+    
+    /**
+     * Freelance can whitelist a partner. Partner will hace a free access to his Vault
+     */ 
+    function listPartner(address _partner) public{
+        require(InternalData[msg.sender].userState==Active);
+        listedPartner[msg.sender][_partner]=true;
+    }
+    /**
+     * Freelance can unlist a partner
+     */
+    function unlistPartner(address _partner) public {
+        require(InternalData[msg.sender].userState==Active);
+        listedPartner[msg.sender][_partner]=false;
+    }
+  
+    /**
+     * Freelance subscribes/updates his data
+     */
+    function iSubscribe(bytes32 _firstname, bytes32 _lastname, bytes32 _phone, bytes32 _email, bytes32 _othersocialmedia, uint256 _unused) public{
+        require(InternalData[msg.sender].userState!=Suspended);
+        if (InternalData[msg.sender].userState==Inactive) InternalData[msg.sender].subscriptionDate = now;
+        InternalData[msg.sender].userState == Active;
+        PublicData[msg.sender].firstName=_firstname;
+        PublicData[msg.sender].lastName=_lastname;
+        PublicData[msg.sender].mobilePhone=_phone;
+        PublicData[msg.sender].email=_email;
+        PublicData[msg.sender].otherSocialMedia=_othersocialmedia;
+        PublicData[msg.sender].unUsed=_unused;
+    }
+    /**
+     * General Data Protection Regulation
+     * Freelancer unsubscribes
+     */
+    function iUnsubscribe() public {
+         require(InternalData[msg.sender].userState!=Inactive);
+         delete InternalData[msg.sender];
+         delete PublicData[msg.sender];
+    }
+    /**
+     * Only Owner can set internal freelance data
+     * Talao can suspend one freelance
+    */
+    function setInternalData(address _freelance, uint8 _state, bool _iskyc, uint8 _referral) onlyOwner public{
+        require (InternalData[_freelance].userState!=Inactive);
+        InternalData[_freelance].userState=_state;
+        InternalData[_freelance].isUserKYC=_iskyc;
+        InternalData[_freelance].referral=_referral;
+    }   
+    /**
+     * Set Confidence Index (public data)  by owner in case of bad behavior) 
+     */
+    function setConfidenceIndex (address _freelance, bool _isidentity, bool _ismobilephone, bool _isemail, uint8 _educations, uint8 _experiences, uint8 _skills, uint8 _languages, uint256 _unused) onlyOwner public{
+    require(InternalData[_freelance].userState==Active);
+    PublicData[_freelance].isIdentity=_isidentity;
+    PublicData[_freelance].isMobilephone=_ismobilephone;
+    PublicData[_freelance].isEmail=_isemail;
+    PublicData[_freelance].nbEducations=_educations;
+    PublicData[_freelance].nbExperiences=_experiences;
+    PublicData[_freelance].nbSkills=_skills;
+    PublicData[_freelance].nbLanguages=_languages;
+    PublicData[_freelance].unUsed=_unused;
+    }
+    /**
+     * Freelance/owner updates his data with the last client ratings for all criterias, economical weights and date
+     * we only need to store the last maxRatings ratings of the maxCriteria criterias
+     */ 
+    function updateLastRating(address _freelance, uint8[maxCriteria] _rating,string _lastcertificate, uint8 _weight, uint256 _date) public {
+        require (_weight != 0);
+        require (_date<now);
+        require (InternalData[msg.sender].userState == Active);
+        require(msg.sender==owner || msg.sender==_freelance);
+        //check if rating is inferior to 100, else return
+        for (uint a =0; a <=maxCriteria-1; a++){
+            if (_rating[a]>100)
+                return;
+        }
+        // update of the last-1 ratings, 
+        for (uint i=0; i<=maxRating-2; i++){
+            for (uint j=0; j<=maxCriteria-1; j++){
+                PublicData[_freelance].ratingValue[i][j]=PublicData[_freelance].ratingValue[i+1][j];
+                PublicData[_freelance].ratingWeight[i]=PublicData[_freelance].ratingWeight[i+1];
+                PublicData[_freelance].ratingDate[i]=PublicData[_freelance].ratingDate[i+1];
+            }
+        }
+        // store last rating 
+        for (uint k=0; k<=maxCriteria-1; k++)  PublicData[_freelance].ratingValue[maxRating-1][k]=_rating[k];
+        PublicData[_freelance].ratingWeight[maxRating-1]=_weight;
+        PublicData[_freelance].ratingDate[maxRating-1]=_date;
+        InternalData[_freelance].lastCertificates[maxRating-1]=_lastcertificate;
+     }
+    // getter to allow owner (Talao) to check certificates used for confidence index
+    function getLastCertificate(address _freelance, uint _rating) onlyOwner public returns (string){
+        require (_rating<=maxRating-1);
+        return (InternalData[_freelance].lastCertificates[_rating]);        
+    }
+    // getter
+
+
+    // getter to allow owner to check all internal data
+    // function getInternalData (address _freelance) onlyOwner ublic returns (){
+    
+
+ }
+ 
