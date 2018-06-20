@@ -5,7 +5,7 @@
 // - fonctions de base pour manipuler ces updateRatings
 // - creation d une whiteliste d adresse qui peuvent acceder au Vault (porte dérobée) sans payer
 //
-// pour  affichage du confidence index (puis  plus tard de la DAO)  on stock une matrice 4 certifcats x 5 criteres  
+// pour  affichage du Vault (client avant de payer)  ; confidence index (puis  plus tard de la DAO)  on stock une matrice 4 certifcats x 5 criteres  
 
 // problemes et solutions liées a la transmission des certificats par le freelance
 // le probleme : le freelance enregistre lui meme les certificats il peut dnc manipuler les donnéees
@@ -18,11 +18,11 @@
 
 
 // consequence pour l'issuer du certificat Blockcerts, il faut integrer dans le certificat
-// - 5 criteres de ratings
-// - poids economique de la mission (en jour ?)
-// - date de la mission ou du certificat (elel doit dejà etre dedans j imagine)
-// - partner : c est notre "distributeur" ex Kmong...
-// - un champ unused pour le future
+// - 5 criteres de ratings uint8
+// - poids economique de la mission uint8
+// - date de la mission ou du certificat uint256
+// - partner : c est notre "distributeur" ex Kmong... uint8
+// - un champ unused pour le future uint256
 
 
 
@@ -51,9 +51,16 @@ contract ExtendedVault is Owned {
         uint256 subscriptionDate; 
         //  Last blockcerts certificates URL used by confidence index but not public
         string[maxRating] lastCertificates;
+        // last ratings values (matrix)
+        uint8[maxRating][maxCriteria] ratingValue;
+        // Economical weight of the last ratings
+        uint8[maxRating] ratingWeight;
+        // Date of the last ratings
+        uint256[maxRating] ratingDate;
         // for futrure use
         uint256 unUsed;
     }
+     // Data for Vault display before client pays for access
      struct PublicVaultData {
         // public freelancer data
         bytes32 firstName;
@@ -63,12 +70,6 @@ contract ExtendedVault is Owned {
         bytes32 otherSocialMedia;
         
         //Confidence Index starts here
-        // last ratings values (matrix)
-        uint8[maxRating][maxCriteria] ratingValue;
-        // Economical weight of the last ratings
-        uint8[maxRating] ratingWeight;
-        // Date of the last ratings
-        uint256[maxRating] ratingDate;
         bool isIdentity;
         bool isMobilephone;
         bool isEmail;
@@ -79,6 +80,9 @@ contract ExtendedVault is Owned {
         // for future use
         uint256 unUsed;
      }
+     // for means calcumation and Vault display
+     uint8[maxCriteria] public ratingMean;
+     
     //whitelisted address of partners to get a free access to vault
     mapping(address=>mapping(address=>bool)) public listedPartner;
     // mapping between[{]_parter freelancer Ethereum address and his data
@@ -166,27 +170,38 @@ contract ExtendedVault is Owned {
         // update of the last-1 ratings, 
         for (uint i=0; i<=maxRating-2; i++){
             for (uint j=0; j<=maxCriteria-1; j++){
-                PublicData[_freelance].ratingValue[i][j]=PublicData[_freelance].ratingValue[i+1][j];
-                PublicData[_freelance].ratingWeight[i]=PublicData[_freelance].ratingWeight[i+1];
-                PublicData[_freelance].ratingDate[i]=PublicData[_freelance].ratingDate[i+1];
+                InternalData[_freelance].ratingValue[i][j]=InternalData[_freelance].ratingValue[i+1][j];
+                InternalData[_freelance].ratingWeight[i]=InternalData[_freelance].ratingWeight[i+1];
+                InternalData[_freelance].ratingDate[i]=InternalData[_freelance].ratingDate[i+1];
             }
         }
         // store last rating 
-        for (uint k=0; k<=maxCriteria-1; k++)  PublicData[_freelance].ratingValue[maxRating-1][k]=_rating[k];
-        PublicData[_freelance].ratingWeight[maxRating-1]=_weight;
-        PublicData[_freelance].ratingDate[maxRating-1]=_date;
+        for (uint k=0; k<=maxCriteria-1; k++)  InternalData[_freelance].ratingValue[maxRating-1][k]=_rating[k];
+        InternalData[_freelance].ratingWeight[maxRating-1]=_weight;
+        InternalData[_freelance].ratingDate[maxRating-1]=_date;
         InternalData[_freelance].lastCertificates[maxRating-1]=_lastcertificate;
+     }
+     // Vault display : Means of ratings for one criteria taking into account economical weight
+    function getMeans(address _freelance, uint8 _criteria) public returns (uint8){
+        ratingMean[_criteria]=1;
+        uint8 totalWeight;
+        for (uint i=0; i<=maxRating-2; i++){
+            if (InternalData[_freelance].ratingValue[i][_criteria]==0) InternalData[_freelance].ratingValue[i][_criteria]=1;
+            if (InternalData[_freelance].ratingWeight[i]==0) InternalData[_freelance].ratingWeight[i]=1;
+            ratingMean[_criteria] += InternalData[_freelance].ratingValue[i][_criteria]* InternalData[_freelance].ratingWeight[i]; 
+            totalWeight += InternalData[_freelance].ratingWeight[i]; 
+        }
+        return(ratingMean[_criteria]/totalWeight);
+                    
      }
     // getter to allow owner (Talao) to check certificates used for confidence index
     function getLastCertificate(address _freelance, uint _rating) onlyOwner public returns (string){
         require (_rating<=maxRating-1);
         return (InternalData[_freelance].lastCertificates[_rating]);        
     }
-    // getter
+    // autres getters a definir
 
 
-    // getter to allow owner to check all internal data
-    // function getInternalData (address _freelance) onlyOwner ublic returns (){
     
 
  }
